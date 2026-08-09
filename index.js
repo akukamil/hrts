@@ -130,9 +130,11 @@ class player_card_class extends PIXI.Container{
 		this.photo=new PIXI.Graphics()
 		this.photo.clear()
 		this.photo.beginFill(0x333355)
-		this.photo.drawCircle(0,0,params.w*0.5)
+		//this.photo.drawCircle(0,0,params.w*0.5)
 		this.photo.h=params.w
 		this.photo.w=params.w
+		this.photo.x=-params.w*0.5
+		this.photo.y=-params.w*0.5
 		
 		this.photoFrame=new PIXI.Sprite(assets.avatarFrameImg)
 		this.photoFrame.width=params.w+20
@@ -951,9 +953,10 @@ game = {
 			pcard.tScore.text=0
 			pcard.cards=[]
 			pcard.ai=+playerUID.includes('aiPlayer')
-			if (pcard.ai)
+			if (pcard.ai){
 				pcard.tName.text='ai_'+p
-			else
+				pcard.photo.texture=PIXI.Texture.WHITE			
+			} else
 				players_cache.update(playerUID)
 									
 			//заполняем картами
