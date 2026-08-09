@@ -895,6 +895,7 @@ game = {
 				pcard.tName.text=player.name
 				pcard.tRating.text=player.rating
 				pcard.rating=player.rating				
+				pcard.photo.set_texture(player.texture)				
 			}
 		}		
 	},
@@ -1788,12 +1789,13 @@ auth2 = {
 		if (game_platform === 'DEBUG') {
 
 			my_data.name = my_data.uid = 'debug' + prompt('Отладка. Введите ID', 100);
+			my_data.name = this.get_random_name(my_data.uid);
 			my_data.orig_pic_url = 'mavatar'+my_data.uid;
 			my_data.auth_mode=1
 			return;
 		}
 
-		if (game_platform === '') {
+		if (game_platform === 'UNKNOWN') {
 
 			//если не нашли платформу
 			//alert('Неизвестная платформа. Кто Вы?')
