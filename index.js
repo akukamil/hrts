@@ -890,7 +890,7 @@ game = {
 	},
 	
 	cache_updated(uid,player){		
-		for (const pcard of Objects.pCards){			
+		for (const pcard of objects.pCards){			
 			if (pcard.uid===uid){
 				pcard.tName.text=player.name
 				pcard.tRating.text=player.rating
