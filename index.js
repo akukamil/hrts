@@ -131,6 +131,8 @@ class player_card_class extends PIXI.Container{
 		this.photo.clear()
 		this.photo.beginFill(0x333355)
 		this.photo.drawCircle(0,0,params.w*0.5)
+		this.photo.h=params.w
+		this.photo.w=params.w
 		
 		this.photoFrame=new PIXI.Sprite(assets.avatarFrameImg)
 		this.photoFrame.width=params.w+20
