@@ -58,6 +58,14 @@ class playing_card_class extends PIXI.Container{
 		const t=this
 		this.bcg.pointerdown=function(){game.cardDown(t)}
 			
+			
+		this.recFlagIcon=new PIXI.Sprite(assets.recCardFlagImg)	
+		this.recFlagIcon.anchor.set(0.5,0.5)
+		this.recFlagIcon.width=30
+		this.recFlagIcon.height=30
+		this.recFlagIcon.x=-23
+		this.recFlagIcon.y=-34
+		this.recFlagIcon.visible=false
 		
 		this.valIcon=new PIXI.Sprite()	
 		this.valIcon.anchor.set(0.5,0.5)
@@ -77,7 +85,7 @@ class playing_card_class extends PIXI.Container{
 		this.passingCard=0
 		this.sortVal=0
 		//this.scale_xy=0.5;
-		this.addChild(this.bcg,this.valIcon,this.suitIcon)
+		this.addChild(this.bcg,this.recFlagIcon,this.valIcon,this.suitIcon)
 	}
 	
 	setOpen(isOpen){
@@ -87,11 +95,13 @@ class playing_card_class extends PIXI.Container{
 			this.bcg.texture=assets.playingCardBcgImg
 			this.valIcon.visible=true
 			this.suitIcon.visible=true
+			//this.recFlagIcon.visible=true
 			
 		}else{
 			this.bcg.texture=assets.playingCardShirtImg
 			this.valIcon.visible=false
 			this.suitIcon.visible=false
+			this.recFlagIcon.visible=false
 		}
 		
 		
@@ -127,6 +137,10 @@ class player_card_class extends PIXI.Container{
 		this.x=params.x
 		this.y=params.y
 		
+		//место где должен находится таймер
+		this.timerPlace_x=objects.pCardsTimerPlaces[params.index].x
+		this.timerPlace_y=objects.pCardsTimerPlaces[params.index].y
+		
 		this.photo=new PIXI.Graphics()
 		this.photo.clear()
 		this.photo.beginFill(0x333355)
@@ -141,8 +155,13 @@ class player_card_class extends PIXI.Container{
 		this.photoFrame.height=params.w+20
 		this.photoFrame.x=-10-params.w*0.5
 		this.photoFrame.y=-10-params.w*0.5
-			
 		
+		this.photoBcg=new PIXI.Sprite(assets.avatarBcgImg)
+		this.photoBcg.width=params.w+20
+		this.photoBcg.height=params.w+20
+		this.photoBcg.x=-10-params.w*0.5
+		this.photoBcg.y=-10-params.w*0.5
+					
 		this.tName=new PIXI.BitmapText('', {fontName: 'bahnschrift48s',fontSize: 20})
 		this.tName.tint=0xFFFF00
 		
@@ -187,7 +206,7 @@ class player_card_class extends PIXI.Container{
 		this.lastPlayed=0
 		this.ai=0
 		
-		this.addChild(this.photo,this.photoFrame, this.tName,this.tRating,this.tScore)
+		this.addChild(this.photoBcg,this.photo,this.photoFrame, this.tName,this.tRating,this.tScore)
 	}
 	
 	setCardsOpen(isOpen){
@@ -318,7 +337,6 @@ class player_card_class extends PIXI.Container{
 		
 	}
 	
-
 }
 
 class tableIconClass extends PIXI.Container{
@@ -955,7 +973,7 @@ game = {
 			pcard.ai=+playerUID.includes('aiPlayer')
 			if (pcard.ai){
 				pcard.tName.text='ai_'+p
-				pcard.photo.texture=PIXI.Texture.WHITE			
+				pcard.photo.set_texture(assets.aiAvatarImg)
 			} else
 				players_cache.update(playerUID)
 									
@@ -1103,6 +1121,9 @@ game = {
 		objects.pCards[2].organizeCards(0)
 		objects.pCards[3].organizeCards(0)
 		
+		//показываем присланные карты
+		this.myPcard.cards.forEach(c=>{if(c.tarPCardIndex!=null)c.recFlagIcon.visible=true})
+		
 		objects.allCardsCont.sortChildren();
 		
 		//проверяем появление ии после выбора карта
@@ -1120,7 +1141,6 @@ game = {
 		if (this.myPlayerIndex===playerIndex) this.state='move'		
 		const pCard=this.PLAYER_INDEX_TO_PCARD[playerIndex]
 		timer.start(pCard)
-	
 
 	},
 	
@@ -1166,6 +1186,7 @@ game = {
 
 		if(data.ai) {
 			console.log('игрок стал ИИ')
+			pCard.photo.set_texture(assets.aiAvatarImg)
 			pCard.ai=1
 		}
 
@@ -1280,6 +1301,8 @@ game = {
 		
 		}			
 		
+		this.state='trickFin'
+		
 		console.log('Забрал все: ',losePcard.index)
 
 		this.trickLeaderPcard=0
@@ -1288,14 +1311,12 @@ game = {
 		//если это просмотр и количество карт не соответствует
 		if (trickFin!==undefined){
 			const cardsLeftPerPlayer=12-trickFin
-			objects.pCards.forEach(pcard=>{
-				
+			objects.pCards.forEach(pcard=>{				
 				if (pcard.cards.length!==cardsLeftPerPlayer){
 					pcard.cards.forEach(c=>c.visible=false)
 					pcard.cards.length=cardsLeftPerPlayer
 					pcard.cards.forEach(c=>c.visible=true)
 				}
-
 			})
 		}
 		
@@ -1393,6 +1414,11 @@ game = {
 			hintMsg.send({t:'Не ваша очередь)))'})
 			return
 		}
+		
+		if(this.state==='trickFin'){
+			hintMsg.send({t:'Подождите...'})
+			return
+		}
 				
 		if(this.state==='passing'){
 			
@@ -1408,7 +1434,14 @@ game = {
 			}			
 			
 			//отображаем кнопку если выбрано 3 карты
-			objects.send_exch_cards_btn.visible=this.passingCardsNum===3
+			if (this.passingCardsNum===3){
+				objects.send_exch_cards_btn.visible=true			
+				hintMsg.close()
+			}else{
+				objects.send_exch_cards_btn.visible=false			
+				hintMsg.send({t:'Выберите 3 карты для передачи',timeout:15000})
+			}
+
 			
 		}		
 		
@@ -1481,13 +1514,17 @@ timer={
 		this.secLeft=15
 		this.updateText()
 		
+		if (!objects.timerCont.visible){
+			objects.timerCont.x=400
+			objects.timerCont.y=225			
+		}
+		
 		objects.timerCont.angle=0
 		objects.timerCont.alpha=1
 		anim3.add(objects.timerCont, {
-			x: [objects.timerCont.x, pCard.x, 'linear'],
-			y: [objects.timerCont.y, pCard.y, 'linear'],
-		}, true, 0.25);
-		
+			x: [objects.timerCont.x, pCard.timerPlace_x, 'linear'],
+			y: [objects.timerCont.y, pCard.timerPlace_y, 'linear'],
+		}, true, 0.25);	
 
 	},
 	
@@ -1505,7 +1542,7 @@ timer={
 		anim3.add(objects.timerCont, {
 			alpha: [1,0, 'linear'],
 			angle: [0,360, 'linear'],
-		}, true, 0.25);
+		}, false, 0.25);
 	},
 	
 	updateText(){
