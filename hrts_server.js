@@ -292,14 +292,14 @@ class table_class{
 		
 		if (data.e===EVENTS.PASSING_FIN&&data.token===this.passingToken){
 			const player=this.players.find(p=>p.uid===data.uid)
-			if(player) player?.passingResolver(data)
+			if(player) player?.passingResolver?.(data)
 			
 		}
 
 		//move - это индекс карты
 		if (data.e===EVENTS.MOVE_FROM_PLAYER&&this.playerToMoveUID===data.uid){
 			const player=this.players.find(p=>p.uid===data.uid)
-			if(player) player?.moveResolver({cardIndex:data.cardIndex})
+			if(player) player?.moveResolver?.({cardIndex:data.cardIndex})
 		}
 			
 	}
@@ -314,8 +314,7 @@ class table_class{
 				console.log('нет данных об игроках')
 				await new Promise(r => setTimeout(r, 5000))
 				continue
-			}		
-			
+			}			
 			
 			//удаляем старых
 			const tm=Date.now()
@@ -351,8 +350,6 @@ class table_class{
 				this.players[2].uid,
 				this.players[3].uid
 			])
-			
-			
 
 			//случайный сид для перемешивания колоды
 			const seed=generateRandomBase64(5)
@@ -386,12 +383,6 @@ class table_class{
 				],
 				seed
 			})
-			
-			
-			
-			//fbs.ref(`table${this.id}/state1`).set('on')
-			
-			//await new Promise(r => setTimeout(r, 2000))
 
 			//ждем выбор карт от игроков для обмена
 			console.log('ждем выбор карт от игроков для обмена')

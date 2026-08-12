@@ -783,7 +783,7 @@ game = {
 	nextPlayerIndex:0,
 	tableId:0,
 	tableStr:'',
-	PLAYER_INDEX_TO_PCARD:[0,0,0,0],
+	PLAYER_INDEX_TO_PCARD:[0,0,0,0],//это индексы серверного порядка
 	
 	async activate(params={}) {
 
@@ -836,9 +836,16 @@ game = {
 		const state=await fbs_once(this.tableStr+'/state')||{}
 		if (state.passing || state.playing){
 			const admPlayers=await fbs_once(this.tableStr+'/admPlayers')
-			for (let p=0;p<NUM_OF_PLAYERS;p++){			
+			for (let p=0;p<NUM_OF_PLAYERS;p++){	
+				const uid=admPlayers[p]
 				const pcard=objects.pCards[p]
-				pcard.tName.text=admPlayers[p]
+				pcard.ai=+uid.includes('aiPlayer')
+				if (pcard.ai){
+					pcard.tName.text=uid
+					pcard.tRating.text=1400
+					pcard.photo.set_texture(assets.aiAvatarImg)					
+				}else
+					players_cache.update(uid)
 			}
 		}
 	},
@@ -970,12 +977,13 @@ game = {
 			pcard.score=0
 			pcard.tScore.text=0
 			pcard.cards=[]
+			pcard.ratingChange=0
 			pcard.ai=+playerUID.includes('aiPlayer')
 			if (pcard.ai){
 				pcard.tName.text='ai_'+p
 				pcard.photo.set_texture(assets.aiAvatarImg)
 			} else
-				players_cache.update(playerUID)
+				players_cache.update(playerUID,{rating:1})
 									
 			//заполняем картами
 			for (let c=0;c<HAND_SIZE;c++){				
@@ -1126,9 +1134,13 @@ game = {
 		
 		objects.allCardsCont.sortChildren();
 		
+		//на всякий случай убираем кнопку
+		objects.send_exch_cards_btn.visible=false
+		
 		//проверяем появление ии после выбора карта
+		const t=this
 		data.ai.forEach((ai,i)=>{
-			objects.pCards[i].ai=ai
+			t.PLAYER_INDEX_TO_PCARD[i].ai=ai
 		})
 			
 		//показываем кто ходит
@@ -1350,12 +1362,18 @@ game = {
 					}
 				}
 			}
+			
+			//меняем мой рейтинг
+			if (this.myPcard.ratingChange!==0&&!this.myPcard.ai){
+				this.setMyRating(my_data.rating+this.myPcard.ratingChange)
+			}
+			
 
 			for (let i=0;i<4;i++){
 				const player=objects.pCards[i]
 				objects.resDlgNames[i].text=player.tName.text
 				objects.resDlgScores[i].text=player.score
-				objects.resDlgRatings[i].text=player.ratingChange
+				objects.resDlgRatings[i].text=player.ratingChange||''
 			}
 
 			objects.resDlgCont.visible=true
@@ -1363,6 +1381,13 @@ game = {
 			console.log('игра закончена!!!')
 			fbs.ref(this.tableStr+'/players/'+my_data.uid).set(firebase.database.ServerValue.TIMESTAMP)
 		}
+		
+	},
+	
+	setMyRating(r){
+		
+		my_data.rating=r
+		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
 		
 	},
 	
