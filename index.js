@@ -839,6 +839,7 @@ game = {
 			for (let p=0;p<NUM_OF_PLAYERS;p++){	
 				const uid=admPlayers[p]
 				const pcard=objects.pCards[p]
+				pcard.uid=uid
 				pcard.ai=+uid.includes('aiPlayer')
 				if (pcard.ai){
 					pcard.tName.text=uid
@@ -1341,7 +1342,7 @@ game = {
 		if (!objects.pCards[0].cards.length){
 			
 			//если есть игрок набравший 26  очков
-			const playerWith26=objects.pCards.find(c=>{c.score===26})
+			const playerWith26=objects.pCards.find(c=>c.score===26)
 			if (playerWith26){
 				playerWith26.score=0
 				objects.pCards.forEach(p=>{
